@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% block body %}
+<div class="split"><div class="card"><h2>People</h2>
+{% for p in people %}<p class="person"><a href="{{ url_for('thread', uid=p['id']) }}"><strong>{{ display_name(p) }}</strong>
+{% if p['unread'] %}<span class="dot" title="Unread messages"></span><span class="sr">({{ p['unread'] }} unread)</span>{% endif %}</a>
+{% if p['last'] %}<br><small class="muted" data-ts="{{ p['last'] }}" data-style="list"></small>{% endif %}</p>
+{% else %}<p class="muted">No conversations yet. Message someone from the search results.</p>{% endfor %}</div>
+<div class="card">{% if other %}<h2>{{ display_name(other) }}</h2><div id="thread">
+{% for m in thread %}{% set ln = loans.get(m['loan_id']) %}
+<div class="msg {{ 'me' if m['sender']==user['id'] else 'them' }}" data-ts="{{ m['ts'] }}">
+{% if ln %}<div class="loancard"><strong>📅 {{ ln['title'] }}</strong><br>
+<span class="muted">{% if ln['lender_id']==user['id'] %}You lend this to {{ display_name(other) }}{% else %}{{ display_name(other) }} lends this to you{% endif %}</span><br>
+{% if ln['start_date'] %}Pick-up: {{ ln['start_date']|nice_date }}<br>{% endif %}Return by: <strong>{{ ln['due_date']|nice_date }}</strong><br>
+{% if ln['status']=='proposed' %}
+ {% if ln['proposed_by']!=user['id'] %}
+ <form method="post" action="{{ url_for('loan_action', lid=ln['id'], action='accept') }}" style="display:inline"><button>Accept</button></form>
+ <form method="post" action="{{ url_for('loan_action', lid=ln['id'], action='decline') }}" style="display:inline"><button class="alt">Decline</button></form>
+ {% else %}<span class="pill">Waiting for a reply</span>
+ <form method="post" action="{{ url_for('loan_action', lid=ln['id'], action='cancel') }}" style="display:inline"><button class="alt">Withdraw</button></form>{% endif %}
+{% elif ln['status']=='accepted' %}<span class="pill ok">Agreed</span> <a href="{{ url_for('calendar_page') }}">See in calendar</a>
+{% else %}<span class="pill">{{ ln['status']|capitalize }}</span>{% endif %}</div>
+{% else %}{{ m['body'] }}{% endif %}<small class="time"></small></div>{% endfor %}</div>
+
+<details class="propose"><summary>📅 Agree on borrow dates</summary>
+{% if mine or theirs %}
+<form method="post" action="{{ url_for('propose', uid=other['id']) }}">
+<label for="bk">Book</label><select id="bk" name="book_id" required>
+{% if theirs %}<optgroup label="Borrow from {{ display_name(other) }}">{% for b in theirs %}<option value="{{ b['id'] }}">{{ b['title'] }}{% if b['author'] %} – {{ b['author'] }}{% endif %}</option>{% endfor %}</optgroup>{% endif %}
+{% if mine %}<optgroup label="Lend one of my books">{% for b in mine %}<option value="{{ b['id'] }}">{{ b['title'] }}{% if b['author'] %} – {{ b['author'] }}{% endif %}</option>{% endfor %}</optgroup>{% endif %}</select>
+<div class="row"><div><label for="sd">Pick-up date (optional)</label><input id="sd" type="date" name="start_date" min="{{ today }}"></div>
+<div><label for="dd">Return by *</label><input id="dd" type="date" name="due_date" min="{{ today }}" required></div></div>
+<p class="muted">{{ display_name(other) }} gets a request and can accept or decline. Once accepted, the dates appear in both calendars.</p>
+<button>Send proposal</button></form>
+{% else %}<p class="muted">Neither of you has a book that can be borrowed yet.</p>{% endif %}</details>
+
+<form method="post"><label for="b">Message</label><textarea id="b" name="body" rows="3" required></textarea><p><button>Send</button></p></form>
+{% else %}<p>Select a conversation.</p>{% endif %}</div></div>
+<script>
+// Times are stored in UTC and shown in your own time zone.
+const now=new Date(), same=(a,b)=>a.toDateString()===b.toDateString();
+const yest=new Date(now);yest.setDate(now.getDate()-1);
+const hm=d=>d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+const day=d=>same(d,now)?'Today':same(d,yest)?'Yesterday':d.toLocaleDateString([], {weekday:'short',day:'numeric',month:'long',year:d.getFullYear()!==now.getFullYear()?'numeric':undefined});
+document.querySelectorAll('[data-style=list]').forEach(e=>{const d=new Date(e.dataset.ts*1000);
+  e.textContent=(same(d,now)?hm(d):day(d)+', '+hm(d))});
+let prev=null;
+document.querySelectorAll('#thread .msg').forEach(e=>{const d=new Date(e.dataset.ts*1000);
+  e.querySelector('.time').textContent=hm(d);e.title=d.toLocaleString();
+  if(!prev||!same(prev,d)){const s=document.createElement('div');s.className='dsep';s.textContent=day(d);e.before(s)}prev=d});
+</script>{% endblock %}

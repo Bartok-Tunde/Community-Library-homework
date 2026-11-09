@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>{% endblock %}
+{% block body %}<div class="card"><h1>Libraries near you</h1>
+<p class="muted">Can't find a book among our members? Public libraries come from OpenStreetMap. Pan the map and press “Search this area”.</p>
+<button id="go">Search this area</button> <button class="alt" id="me">Use my location</button></div>
+<div id="map" role="region" aria-label="Map of libraries"></div>
+<script>
+const own={{ locs|tojson }};const m=L.map('map').setView(own.length?[own[0].lat,own[0].lon]:[47.4979,19.0402],13);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(m);
+const layer=L.layerGroup().addTo(m);
+async function find(){layer.clearLayers();const b=m.getBounds();
+ const q=`[out:json][timeout:20];nwr["amenity"="library"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});out center 80;`;
+ const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+ const j=await r.json();j.elements.forEach(e=>{const c=e.center||e;L.marker([c.lat,c.lon]).addTo(layer)
+  .bindPopup('<strong>'+((e.tags&&e.tags.name)||'Library')+'</strong>'+(e.tags&&e.tags['addr:street']?'<br>'+e.tags['addr:street']+' '+(e.tags['addr:housenumber']||''):''))});}
+go.onclick=find;me.onclick=()=>navigator.geolocation.getCurrentPosition(p=>{m.setView([p.coords.latitude,p.coords.longitude],14);find()});
+find();
+</script>{% endblock %}

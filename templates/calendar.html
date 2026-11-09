@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h1>Calendar</h1>
+<div class="calnav"><a class="btn alt" href="?m={{ prev }}" aria-label="Previous month">‹</a>
+<strong>{{ month_name }} {{ y }}</strong>
+<a class="btn alt" href="?m={{ nxt }}" aria-label="Next month">›</a>
+<a class="btn alt" href="{{ url_for('calendar_page') }}">Today</a></div>
+<div class="calscroll"><div class="calgrid">
+{% for n in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<div class="dow">{{ n }}</div>{% endfor %}
+{% for w in weeks %}{% for d in w %}{% set iso = d.isoformat() %}
+<div class="day{{ ' other' if d.month != m }}{{ ' today' if d == today }}"><span class="num">{{ d.day }}</span>
+{% for e in events.get(iso, []) %}<a class="chip {{ e.kind }}{{ ' late' if e.kind == 'return' and iso < today_iso }}" href="{{ url_for('thread', uid=e.loan.other_id) }}" title="{{ e.title }}">{{ '↩' if e.kind == 'return' else '→' }} {{ e.loan.title }}</a>{% endfor %}
+</div>{% endfor %}{% endfor %}</div></div>
+<p class="muted"><span class="chip pickup">→ Pick-up</span> <span class="chip return">↩ Return due</span> <span class="chip return late">Overdue</span> · Click an entry to open the chat.</p></div>
+
+<div class="card"><h2>Borrow dates</h2>
+{% for l in loans %}<div class="loanrow">
+<div><strong>{{ l['title'] }}</strong>
+{% if l['due_date'] < today_iso %}<span class="pill late">Overdue</span>{% endif %}<br>
+<span class="muted">{{ 'Lending to' if l['role']=='lending' else 'Borrowed from' }} <a href="{{ url_for('thread', uid=l['other_id']) }}">{{ l['other_name'] }}</a>
+{% if l['start_date'] %} · pick-up {{ l['start_date']|nice_date }}{% endif %} · return by <strong>{{ l['due_date']|nice_date }}</strong></span></div>
+<div class="actions">
+{% for e in l['events'] %}<a class="btn alt" target="_blank" rel="noopener" href="{{ e['google'] }}">Google Calendar: {{ 'return' if e['kind']=='return' else 'pick-up' }}</a>{% endfor %}
+<a class="btn alt" href="{{ url_for('calendar_loan', lid=l['id']) }}">.ics</a>
+{% if l['role']=='lending' %}<form method="post" action="{{ url_for('loan_action', lid=l['id'], action='returned') }}" style="display:inline"><button>Mark as returned</button></form>
+{% else %}<span class="muted">The lender marks it as returned.</span>{% endif %}</div></div>
+{% else %}<p>Nothing scheduled yet. Agree on dates with another member from the “Messages” tab.</p>{% endfor %}</div>
+
+<div class="card"><h2>Sync with Google Calendar</h2>
+<p><strong>Quick way:</strong> use the “Google Calendar” buttons above to add a single date, or <a href="{{ url_for('calendar_all') }}">download everything as an .ics file</a> and import it in Google Calendar (Settings → Import &amp; export).</p>
+<p><strong>Automatic sync:</strong> subscribe to your private link in Google Calendar (Other calendars → + → From URL). New and changed dates then show up on their own, usually within a day.</p>
+<input type="text" readonly value="{{ feed_url }}" onclick="this.select()" aria-label="Private calendar link">
+{% if is_local %}<p class="flash" style="margin-top:.7rem">You're running the site on your own computer, so Google can't reach this link yet. Automatic sync only works once the site is online at a public address (set the <code>BASE_URL</code> environment variable to that address). Until then, use the buttons or the .ics file.</p>{% endif %}
+<p class="muted">Anyone with this link can see your due dates, so keep it private.</p>
+<form method="post" action="{{ url_for('calendar_new_link') }}"><button class="alt">Create a new private link</button></form></div>
+{% endblock %}

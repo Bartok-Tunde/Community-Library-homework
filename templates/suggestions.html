@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h1>Suggestions</h1>
+{% if langs %}<p class="muted">Showing books in: {{ langs|join(', ') }}. <a href="{{ url_for('profile') }}">Change in your profile</a></p>{% endif %}
+{% if not has_data %}<p>Add books to your library or pick themes in your profile and we'll suggest what to read next.</p>{% endif %}</div>
+{% if community %}<h2 style="color:#fff3dd">From people near the community</h2><div class="grid">{% for b in community %}
+<div class="book"><strong>{{ b['title'] }}</strong><span>{% if b['author'] and b['author']!='Unknown' %}{{ b['author'] }}{% else %}<em>Unknown</em>{% endif %}</span><span class="muted">{{ b['theme'] }} · {{ b['owner'] or 'Anonymous' }}</span>
+<a class="btn alt" href="{{ url_for('search', title=b['title']) }}">Find it</a></div>{% endfor %}</div>{% endif %}
+{% if web %}<h2 style="color:#fff3dd">More to explore</h2><div class="grid">{% for b in web %}
+<div class="book">{% if b['cover'] %}<img src="{{ b['cover'] }}" alt="">{% endif %}<strong>{{ b['title'] }}</strong><span>{% if b['author'] and b['author']!='Unknown' %}{{ b['author'] }}{% else %}<em>Unknown</em>{% endif %}</span>
+<a class="btn alt" href="{{ url_for('search', title=b['title']) }}">Search for it</a></div>{% endfor %}</div>{% endif %}
+{% endblock %}

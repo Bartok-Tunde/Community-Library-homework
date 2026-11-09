@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block body %}
+<form method="get" class="card"><h1>Find a book</h1>
+<div class="row"><div><label for="t">Title</label><input id="t" type="text" name="title" value="{{ a.get('title','') }}">
+<label class="inline"><input type="checkbox" name="sim_title" {{ 'checked' if a.get('sim_title') }}>Find similar</label></div>
+<div><label for="au">Author</label><input id="au" type="text" name="author" value="{{ a.get('author','') }}">
+<label class="inline"><input type="checkbox" name="sim_author" {{ 'checked' if a.get('sim_author') }}>Find similar</label></div></div>
+<label>Borrow method</label>{% for m in METHODS %}<label class="inline"><input type="checkbox" name="methods" value="{{ m }}" {{ 'checked' if m in a.getlist('methods') }}>{{ m }}</label>{% endfor %}
+<label class="inline"><input type="checkbox" name="use_distance" id="ud" {{ 'checked' if a.get('use_distance') }}><strong>Limit by distance</strong></label>
+<div id="dist" class="row"><div><label for="km">Within <output id="kmo">{{ a.get('km',25) }}</output> km</label>
+<input id="km" type="range" name="km" min="1" max="200" value="{{ a.get('km',25) }}" oninput="kmo.value=this.value"></div>
+<div><label for="loc">From</label><select id="loc" name="loc">{% for l in locs %}<option value="{{ l['id'] }}" {{ 'selected' if a.get('loc')==l['id']|string }}>{{ l['name'] ~ ' – ' if l['name'] }}{{ l['address'] }}</option>{% endfor %}<option value="new">Type a new location…</option></select>
+<input type="text" name="new_loc" id="nl" placeholder="Address or city" value="{{ a.get('new_loc','') }}"></div></div>
+<p><button>Search</button></p></form>
+<script>const ud=document.getElementById('ud'),d=document.getElementById('dist'),s=document.getElementById('loc'),n=document.getElementById('nl');
+function f(){d.style.display=ud.checked?'':'none';n.style.display=s.value==='new'?'':'none'}ud.onchange=s.onchange=f;f()</script>
+{% if error %}<div class="flash">{{ error }}</div>{% endif %}
+{% if searched and not error %}<h2 style="color:#fff3dd">{{ results|length }} result{{ '' if results|length==1 else 's' }}</h2>
+<div class="grid">{% for b,km in results %}<div class="book">
+{% if b['cover'] %}<img src="{{ b['cover'] if b['cover'].startswith('http') else url_for('static', filename='uploads/' ~ b['cover']) }}" alt="">{% else %}<div class="ph">No cover</div>{% endif %}
+<strong>{{ b['title'] }}</strong><span>{% if b['author'] and b['author']!='Unknown' %}{{ b['author'] }}{% else %}<em>Unknown</em>{% endif %}</span><span class="muted">{{ b['language'] }}</span>
+<span>{% for m in b['methods'].split(',') %}<span class="pill">{{ m }}</span>{% endfor %}</span>
+<span class="muted">{{ b['owner'] or 'Anonymous' }}{% if km is not none %} · {{ '%.1f'|format(km) }} km away{% endif %}</span>
+<a class="btn" href="{{ url_for('thread', uid=b['owner_id']) }}">Message owner</a></div>
+{% else %}<div class="card">No matches. Try “Find similar” or a wider distance, or check the <a href="{{ url_for('map_page') }}">map</a> for a real library.</div>{% endfor %}</div>{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h1>My library</h1><a class="btn" href="{{ url_for('book_form') }}">Add a book</a></div>
+<div class="grid">{% for b in books %}
+<div class="book">{% if b['cover'] %}<img src="{{ b['cover'] if b['cover'].startswith('http') else url_for('static', filename='uploads/' ~ b['cover']) }}" alt="">{% else %}<div class="ph">No cover</div>{% endif %}
+<strong>{{ b['title'] }}</strong><span>{% if b['author'] and b['author']!='Unknown' %}{{ b['author'] }}{% else %}<em>Unknown</em>{% endif %}</span>
+<span class="muted">{{ b['language'] }}{% if b['year'] %} · {{ b['year'] }}{% endif %}</span>
+<span>{% for m in b['methods'].split(',') %}<span class="pill">{{ m }}</span>{% endfor %}</span>
+<div><a class="btn alt" href="{{ url_for('book_form', bid=b['id']) }}">Edit</a>
+<form method="post" action="{{ url_for('book_delete', bid=b['id']) }}" style="display:inline"><button class="alt">Remove</button></form></div></div>
+{% else %}<div class="card">Your shelf is empty. Add your first book.</div>{% endfor %}</div>
+{% endblock %}

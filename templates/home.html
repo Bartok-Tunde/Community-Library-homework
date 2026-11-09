@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="max-width:460px;margin:3rem auto">
+<h1>Borrow, swap or keep a book from a neighbour</h1>
+<p class="muted">Log in to list your books and find others nearby.</p>
+<form method="post"><label for="e">Email</label><input id="e" type="email" name="email" required>
+<label for="p">Password</label><input id="p" type="password" name="password" required minlength="6">
+<p><button name="action" value="login">Log in</button> <button class="alt" name="action" value="register">Create account</button></p></form></div>
+{% endblock %}

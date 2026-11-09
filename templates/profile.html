@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% block body %}
+<form method="post" enctype="multipart/form-data" class="card"><h1>Your profile</h1>
+<input type="hidden" name="action" value="save">
+<p class="muted">Everything here is optional. Without a name you appear as “Anonymous”.</p>
+<div class="row"><div><label for="n">Name</label><input id="n" type="text" name="name" value="{{ user['name'] or '' }}"></div>
+<div><label for="ph">Photo</label><input id="ph" type="file" name="photo" accept="image/*">
+{% if user['photo'] %}<img class="avatar" src="{{ url_for('static', filename='uploads/' ~ user['photo']) }}" alt="">{% endif %}</div></div>
+<label>Books I usually have</label>{% for t in THEMES %}<label class="inline"><input type="checkbox" name="have" value="{{ t }}" {{ 'checked' if t in have }}>{{ t }}</label>{% endfor %}
+<label>Books I'm looking for</label>{% for t in THEMES %}<label class="inline"><input type="checkbox" name="seek" value="{{ t }}" {{ 'checked' if t in seek }}>{{ t }}</label>{% endfor %}
+<label>Languages I read <span class="muted" style="font-weight:normal">(used to filter your suggestions only)</span></label>{% for l in LANGS %}<label class="inline"><input type="checkbox" name="languages" value="{{ l }}" {{ 'checked' if l in my_langs }}>{{ l }}</label>{% endfor %}
+<p><button>Save profile</button></p></form>
+<div class="card"><h2>Locations</h2>
+<p class="muted">You need at least one to lend books. Other people never see the exact spot, only how far away it is.</p>
+{% for l in locs %}<form method="post" style="display:flex;gap:.5rem;align-items:center;margin:.4rem 0">
+<input type="hidden" name="action" value="del_loc"><input type="hidden" name="id" value="{{ l['id'] }}">
+<span style="flex:1">{% if l['name'] %}<strong>{{ l['name'] }}</strong> – {% endif %}{{ l['address'] }}</span><button class="alt">Remove</button></form>
+{% else %}<p>No locations yet.</p>{% endfor %}
+<form method="post" class="row"><input type="hidden" name="action" value="add_loc">
+<div><label for="ln">Name (optional)</label><input id="ln" type="text" name="loc_name" placeholder="Home, Café Central…"></div>
+<div><label for="ad">Address or place</label><input id="ad" type="text" name="address" required></div>
+<div style="align-self:end;flex:0"><button>Add location</button></div></form></div>
+{% endblock %}

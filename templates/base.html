@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Community Library{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% block head %}{% endblock %}</head><body>
+<nav><a class="brand" href="/">Community Library</a>
+{% if user %}
+ {% for ep,label in [('search','Search'),('map_page','Map'),('suggestions','Suggestions'),('library','My library'),('messages','Messages'),('calendar_page','Calendar'),('profile','Profile')] %}
+ <a href="{{ url_for(ep) }}" class="{{ 'on' if request.endpoint==ep }}">{{ label }}{% if ep=='messages' and unread %}<span class="dot" title="Unread messages"></span><span class="sr">({{ unread }} unread)</span>{% endif %}</a>{% endfor %}
+ <a href="{{ url_for('logout') }}">Log out</a>{% endif %}</nav>
+<main>{% for m in get_flashed_messages() %}<div class="flash">{{ m }}</div>{% endfor %}
+{% block body %}{% endblock %}</main></body></html>
